@@ -191,7 +191,7 @@ class Handler(threading.Thread):
             elif request['cmd'] == 'del':
                 msg = self.delete(request)
             elif request['cmd'] == 'que':
-                msg = self.queue()
+                msg = self.queue(request)
             else:
                 raise Exception('Unsupported command')
             status = 'ok'
@@ -260,26 +260,29 @@ class Handler(threading.Thread):
         return id
     
     
-    def queue(self):
-        que = []
+    def queue(self, request):
+        user = request['user']
+        que  = []
         curtime = datetime.datetime.now()
         for job in self.resource.getQueued():
-            time = datetime.datetime(1,1,1) + datetime.timedelta(
-                   seconds=int((curtime - job.subtime).total_seconds()))
-            time = '{d}-{h:02d}:{m:02d}:{s:02d}'.format(d=time.day-1,  h=time.hour,
-                                                        m=time.minute, s=time.second)
-            
-            item = [str(job.id), job.name, job.user, 'Q', time, str(job.n)]
-            que.append(item)
+            if user == '' or user == job.user:
+                time = datetime.datetime(1,1,1) + datetime.timedelta(
+                       seconds=int((curtime - job.subtime).total_seconds()))
+                time = '{d}-{h:02d}:{m:02d}:{s:02d}'.format(d=time.day-1,  h=time.hour,
+                                                            m=time.minute, s=time.second)
+                
+                item = [str(job.id), job.name, job.user, 'Q', time, str(job.n)]
+                que.append(item)
         
         for job in self.resource.getRunning():
-            time = datetime.datetime(1,1,1) + datetime.timedelta(
-                   seconds=int((curtime - job.runtime).total_seconds()))
-            time = '{d}-{h:02d}:{m:02d}:{s:02d}'.format(d=time.day-1,  h=time.hour,
-                                                        m=time.minute, s=time.second)
-            
-            item = [str(job.id), job.name, job.user, 'R', time, str(job.n)]
-            que.append(item)
+            if user == '' or user == job.user:
+                time = datetime.datetime(1,1,1) + datetime.timedelta(
+                       seconds=int((curtime - job.runtime).total_seconds()))
+                time = '{d}-{h:02d}:{m:02d}:{s:02d}'.format(d=time.day-1,  h=time.hour,
+                                                            m=time.minute, s=time.second)
+                
+                item = [str(job.id), job.name, job.user, 'R', time, str(job.n)]
+                que.append(item)
         return que
 
 
